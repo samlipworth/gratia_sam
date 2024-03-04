@@ -1151,19 +1151,18 @@
 #' @importFrom tidyr pivot_wider
 #' @importFrom dplyr mutate case_match
 #' @importFrom tidyselect matches
-`compute_y_fdiff_2` <- function(samples, type, eps = 1e-7) {
+compute_y_fdiff_2 <- function(samples, type, eps = 1e-7) {
     samples <- samples |>
         pivot_wider(id_cols = !matches(".fitted", "..type"),
-            names_from = "..type", values_from = ".fitted",
-            names_prefix = "..")
+                    names_from = "..type", values_from = ".fitted",
+                    names_prefix = "..")
 
-    samples |>
-        mutate(..fd =
-            case_match(type,
-                "forward"  ~ (.data[["..xb"]] -
-                    (2 * .data[["..xf"]]) + .data[["..x"]])  / eps^2,
-                "backward" ~ (.data[["..x"]]  -
-                    (2 * .data[["..xf"]]) + .data[["..xb"]]) / eps^2,
-                "backward" ~ (.data[["..xf"]] -
-                    (2 * .data[["..x"]])  + .data[["..xb"]]) / eps^2))
+    samples <- samples |>
+        mutate(..fd = case_when(
+            type == "forward" ~ ((..xb - (2 * ..xf) + ..x) / eps^2),
+            type == "backward" ~ ((..x - (2 * ..xf) + ..xb) / eps^2),
+            type == "central" ~ ((..xf - (2 * ..x) + ..xb) / eps^2)
+        ))
+
+    return(samples)
 }
